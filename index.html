@@ -4,7 +4,7 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>BIM 360 Glue API</title>
+		<title>AutoCAD JavaScript API</title>
 
 		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
 		<meta name="author" content="Hakim El Hattab">
@@ -52,7 +52,7 @@
 					<h5>梁晓冬&nbsp&nbsp  					 
 						<img width="100" height="100" data-src="images/xd.png" alt="Down arrow">	 					 
 					<font size='5'><p>DevTech中国区经理<p> 
-					负责产品：AutoCAD, Inventor, Navisworlks, BIM 360，Fusion 360及其它云和移动产品
+					负责产品：AutoCAD, Inventor, Navisworks, BIM 360，Fusion 360及其它云和移动产品
 				</font>							
 					
 				</section>
@@ -61,13 +61,684 @@
 					<h2>内容</h2>
 					<p>
 						<ul>
-						<li>BIM 360 Glue 简介</li>
+						<li>AutoCAD JavaScript API</li>
 						<li>Glue API简介</li>
 						<li>演示</li>
 						<li>参考资料</li>
 					</ul>
 					</p>
 				</section>
+				
+				<section>
+					<h2>JavaScript的时代</h2>
+					<p>
+					<ul>
+						<li>独步天下的语言</li>
+						<li>'网络时代的语言组件'</li>
+						<li>很多高大上的语言都编译为JavaScript</li>
+						<li>HTML5的界面融入到AutoCAD</li>
+						<li>AutoCAD自己的'设计提要' 功能也是使用之</li>						 
+					</ul>
+					</p>
+				</section>
+				
+				<section>
+				 
+					<h2>AutoCAD JavaScript API 当前目标</h2>					 
+					<ul>
+						<li>是什么</li>						 
+							<ul>
+								<li>广大的网络开发者加入AutoCAD俱乐部</li>						 
+								<li>2005年.NET 接口之后又一种新的API</li>
+								<li>AutoCAD自己的'设计提要' 功能也使用之</li>						 
+								<li>HTML5的界面融入到AutoCAD</li>															 
+								<li>程序的部署简单，一个URL即可</li>								 
+								<li>进程外的API</li>	
+								<li>主要是交互式功能</li>	
+									<ul>
+										<li>UI，Prompt，Jig，临时图形，发送命令</li>						 
+									</ul>								
+							</ul>
+						<li>不是什么</li>						 
+							<ul>
+								<li>直接操作图纸数据库</li>						 
+								<li>直接访问和操作图形元素</li>						 
+								<li>进程内，性能优先的API</li>						 
+							</ul>					
+					</ul>					 
+				</section>
+				
+				<section>
+					<h2>AutoCAD JavaScript API 实现机理</h2> 				 
+					<ul>
+						<li>HTML/JavaScript运行在单独的进程 </li>						 
+							<ul>
+								<li>宿主程序：AcWebBrowser.exe。集成Chrome式的嵌入框架。使用到V8引擎,可扩展</li>						 									 															 
+							</ul>
+						<li><a href='https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js'>中间层:<br>https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js</a></li>						 						
+						<li>与AutoCAD进程间数据通讯：Json形式</li>	 						
+						<li>目前API总入口：<b>Acad</b>对象</li>	 
+						<li>2013:v1; 2014:v2; 2016:v3
+					</ul>					 
+				</section>
+				
+				<section>
+					<h2>JavaScript典型范式</h2> 				 
+					<ul>
+						<li>基于Promises的异步调用</li>						 
+							<ul>
+								<li>没有C#的async/await方便，但也很好用</li>						 									 															 
+							</ul>
+							<font size = '6'>Acad.Editor.getPoint(opts).then(onPointSelected, onPointError);</font>						 
+							<font size = '6'>Acad.Editor.drag(jig).then(onJigComplete, onJigError);</font>								 
+							 
+						<li>也可使用lambds范式</li>						 							 
+					</ul>					 
+				</section> 
+				
+			 
+				<section>
+					<h2>程序结构</h2> 				 
+					<ul>
+						<li>JS文件或网页文件或网页地址</li>						 
+						<li>必要的js文件</li>						 
+						<li>选用合适方式加载到AutoCAD</li>					 						  
+					</ul>					 
+				</section>
+				
+				<section>
+					<h2>如何加载JavaScript程序</h2> 				 
+					<ul>
+						<li>直接方式</li>						 
+							<ul>
+								<li>WEBLOAD命令</li>						 									 															 
+								<li>.NET： 		Application.LoadJSScript()</li>						 									 															 
+								<li>ObjectARX： acjsLoadJSScript()</li>						 									 															 
+							</ul>
+						<li>更常用方式：HTML的对话框,停靠窗口或文档窗口</li>	
+							<ul>
+								<li>本地网页文件或网页</li>						 									 															 
+								<li>必要的js文件</li> 									 															 
+							</ul>						
+					</ul>					 
+				</section>
+				
+				<section>
+					<h2>直接方式</h2> 				 
+					 <pre><code data-trim contenteditable>
+// 函数定义 
+function pickPoint() {
+    function onComplete(args) {
+		//成功完成
+        var resObj = JSON.parse(args);
+        if (resObj) 
+            alert('You picked: ' + resObj.value.x + "," + resObj.value.y + "," + resObj.value.z);
+    }
+    function onError(args) {
+		//任何失败 
+        alert('Error picking point: ' + args);
+    }
+    var optionsFirst = new Acad.PromptPointOptions('Pick a point', new Acad.Point3d(0, 0, 0));
+    Acad.Editor.getPoint(optionsFirst).then(onComplete, onError);
+}
+//执行函数 
+pickPoint(); 
+
+					</code></pre>		
+				</section>
+				
+				<section>
+					<section id="frag_js_loaduri">	
+					<h2>HTML对话框，停靠窗口或文档窗口</h2> 
+					 				
+							<ul>
+								<li>模式对话框</li>	
+									<pre><code data-trim >
+									Application.ShowModalWindow(uri);
+									</code></pre>						
+															 
+								<li>非模对话框</li>
+									<pre><code data-trim >
+									Application.ShowModelessWindow(uri);
+									</code></pre>						
+															 
+								<li>停靠窗口</li>
+									<pre><code data-trim >
+var ps = new PaletteSet(…);
+ps.Add("…", uri);
+									</code></pre>			 
+								<li>文档窗口</li>
+									<pre><code data-trim >
+									Application.DocumentWindowCollection.AddDocumentWindow("…", uri);
+									</code></pre>							
+									 
+								<li>uri可以是本地HTML文件或网页</li>	
+											
+							</ul>	
+						</section>	 
+				<section id="frag_js_loaduri">	
+					<h2>停靠窗口加载HTML</h2> 
+
+					<pre><code data-trim >
+[CommandMethod("AdnJsDemo")]
+public void AdnJsDemo()
+{
+	string dir = System.Environment.GetFolderPath(
+		System.Environment.SpecialFolder.Desktop);
+
+	System.Windows.Forms.OpenFileDialog oFlg = new   System.Windows.Forms.OpenFileDialog();
+	oFlg.Title = "Select Html File to load...";
+	oFlg.Filter = "Html Files (*.html)|*.html";
+	if (oFlg.ShowDialog() != DialogResult.OK)
+	{
+		return;
+	}
+
+
+	string filename = oFlg.FileName;
+	if (filename == string.Empty)
+		return;
+
+	if (_ps == null)
+	{
+		_ps = new Autodesk.AutoCAD.Windows.PaletteSet(
+			"JavaScript Demo",
+			new Guid("730CF323-7D71-40A1-990E-F7CF81A84340"));
+	}
+
+	String url = "file:///" + filename;
+	//String url = demo_site_url;
+
+	try
+	{
+		String tabName = "";
+		Uri uri = new Uri(url);
+
+		if (uri.IsFile)
+		{
+			String[] segments = uri.Segments;
+
+			if (segments.Length > 0)
+			{
+				tabName = segments[segments.Length - 1];
+
+				String[] fileSplit = tabName.Split('.');
+
+				if (fileSplit.Length > 0)
+					tabName = fileSplit[0];
+			}
+		}
+		else
+		{
+			tabName = uri.Host;
+		}
+
+		if(_ps.Count !=0) 
+		{
+			_ps[0].PaletteSet.Remove(0);
+		}
+
+		// The PaletteSet.Add method takes as input an Uri
+		// that can point either to a local html page or any online url
+		Palette p = _ps.Add(tabName, uri);
+
+		_ps.Visible = true;
+	}
+	catch (UriFormatException ex)  
+	{
+		// This exception will catch an empty our null Uri
+		System.Windows.Forms.MessageBox.Show(ex.Message);
+	}
+}
+							  
+					</code></pre>	
+				</section>		
+				</section>	 
+				
+				<section>
+					<h2>搭建网页</h2> 
+					
+					<section id="frag_js_basiccode">
+					<h3>MyTest.html</h3>
+					<pre><code data-trim contenteditable>
+<html>
+<head>
+<!--引入AutoCAD JS基本库 -->
+<script type="text/javascript" src="https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js"></script>
+<!--引入自定义JS库 -->
+<script type="text/javascript" src="MyTest.js" ></script>  
+</head>
+<body> 
+<h3>My Test</h3>
+<!-- 定义控件 -->
+<!-- 系统变量名 -->
+<input type='text' id='sysvarname' value='sys name' />
+<!-- 获取系统变量的值 -->
+<input type='button' onclick='getSysvar()' value='get sys value'/><br />   
+<!--显示系统变量的值 -->
+<input type='text' id='sysvarvalue' value='' />
+<!--设置系统变量的值 -->
+<input type='button' onclick='setSysvar()' value='set sys value'/><br />   
+<hr />
+<!--启动画圆命令 -->
+<input type='button' onclick='myCircle()' value='send command'/><br />   
+</body>
+</html>
+					</code></pre>	
+					</section>
+					
+<section id="frag_js_basiccode">
+<h3>MyTest.js</h3>
+<pre><code data-trim contenteditable>
+ function getSysvar()
+{
+	var sysvarname = document.getElementById('sysvarname').value;
+	var sysvar = Acad.SystemVariableCollection.getSystemVariable(sysvarname);
+	document.getElementById('sysvarvalue').value = sysvar.value;
+}
+
+function setSysvar()
+{
+	var sysvarname = document.getElementById('sysvarname').value;
+    var sysvar = Acad.SystemVariableCollection.getSystemVariable(sysvarname);
+	var sysnewvalue = document.getElementById('sysvarvalue').value;
+
+	sysvar.postValue(sysnewvalue);
+}
+
+function myCircle()
+{
+	Acad.Editor.executeCommand('._Circle ');
+}
+
+					</code></pre>
+</section>					
+					 					 
+				</section>  
+				
+				<section>
+					<h2>调试： F12</h2> 
+					<img width="800" height="400" data-src="images/debug.png" alt="Down arrow">		
+				</section>  
+				
+				<section>
+					<h2>可绑定对象集合</h2>
+					<section id="frag_js_collection">
+						<ul>
+							<li>层表，线型表等</li>						 
+							<li>Acad.DataItemCollectionManager.getKnownCollection(集合名)</li>						 
+							<li>可委托事件监视表变化</li>						 
+							<li>只读功能</li>						 
+								<ul>
+									<li>通过发送命令实现编辑</li>						 
+								</ul>							 
+						</ul>
+					</section> 	
+					<section id="frag_js_collection">	
+ <pre><code data-trim>
+ function getLayer()
+{	 
+	var colName = 'LAYER';
+	var results;
+	Acad.DataItemCollectionManager.getKnownCollection(colName).then(function onSuccess(retvalue){
+			 for (var index = 0; index < retvalue.dataItems.length; ++index) {
+				alert(retvalue.dataItems[index].name);
+			}
+	}
+	,function onError(ret){});	 
+}
+ </code></pre>
+					</section> 	
+				</section> 
+				
+				
+				<section>
+					
+					<section id="frag_js_interaction">
+						<h2>用户交互输入</h2>
+						<ul>
+							<li>类似.NET的形式</li>	
+							<li>Option: 配置交互输入时的选项</li>	
+							<li>多种交互方法</li>	
+							<ul>
+								<li>Acad.Editor.getAngle</li>
+								<li>Acad.Editor.getCorner</li>
+								<li>Acad.Editor.getDistance</li>
+								<li>Acad.Editor.getEntity</li>
+								<li>Acad.Editor.getDouble</li>
+								<li>Acad.Editor.getInteger</li>
+								<li>Acad.Editor.getKeywords</li>
+								<li>Acad.Editor.getSelection</li>
+								<li>Acad.Editor.getString</li>			 
+							</ul> 
+												 
+						</ul>		
+					</section> 
+					<section id="frag_js_interaction">
+						<h2>获取数值（或关键字）</h2>
+						<pre><code data-trim>
+function getDouble()
+{
+    var options = new Acad.PromptDoubleOptions('');
+
+	var messageAndKeywords = 'Input Double [Rectangle/Circle/Line]:';
+    var globalKeywords = 'Rectangle Circle Line';
+
+    options.setMessageAndKeywords(messageAndKeywords, globalKeywords);
+	
+	  Acad.Editor.getDouble(options).then(
+        function onCompletePromptStringResult(jsonPromptResult) {
+		 var resObj =  jsonPromptResult;
+			if (resObj) { 
+
+				if (resObj.status == 5100) { // normal (string entered)
+					document.getElementById('testTextArea').innerHTML  = 'normal:' + resObj.value.toString();					 
+				} else if (resObj.status == -5005) { // keyword/arbitrary input
+					document.getElementById('testTextArea').innerHTML = 'keyword/arbitrary: ' + resObj.stringResult;
+ 				} else if (resObj.status == 5000) { // Enter/Space key (null input)
+					document.getElementById('testTextArea').innerHTML = 'enter/space: ' + resObj.stringResult;
+				} else if (resObj.status == -5002) { // Cancel
+					document.getElementById('testTextArea').innerHTML = 'cancel: ' +resObj.stringResult;
+				} else {
+					document.getElementById('testTextArea').innerHTML = '???';
+				}
+			}
+		},
+        function onErrorPromptResult(ret){});
+	
+}
+						</code></pre>
+					</section> 						
+					<section id="frag_js_interaction">
+					<h2>获取实体（或关键字）</h2>
+						<pre><code data-trim>
+function getEntity()
+{
+	var options = new Acad.PromptEntityOptions();
+	  
+	var messageAndKeywords = 'Input Entity [Rectangle/Circle/Line]:';
+    var globalKeywords = 'Rectangle Circle Line';
+
+    options.setMessageAndKeywords(messageAndKeywords, globalKeywords);
+	  
+     Acad.Editor.getEntity(options).then(
+		function onComplete(jsonPromptResult){
+			  var resObj =  jsonPromptResult;
+			 if (resObj) {    
+
+				if (resObj.status == 5100) { // normal (point selected/entered) 
+					document.getElementById('testTextArea').innerHTML = 'object id : ' + resObj.objectId.toString() + '\n';
+				 
+					//convert ads_name to objectID
+					var oid = jsonPromptResult.objectId
+					var hexString = oid.toString(16);
+					//objectID
+					oid = parseInt(hexString, 16);
+					var thisEnt = new Acad.DBEntity(hexString); 
+					//get
+					var props = thisEnt.getProperties();
+					
+					if(props.IsA == "AcDbCircle")
+					{
+						var outStr = "center: " + props.Center;
+						outStr += "\nradius: " + props.Radius;
+						outStr += "\nArea: " + props.Area;
+						outStr += "\nLayer: " + props.Layer;
+						alert (outStr);
+					}
+					
+				} else if (resObj.status == -5005) { // keyword/arbitrary input
+				document.getElementById('testTextArea').innerHTML = 'keyword/arbitrary: ' + resObj.stringResult;
+				} else if (resObj.status == 5000) { // Enter/Space key (null input)
+					document.getElementById('testTextArea').innerHTML = 'enter/space: ' + resObj.stringResult;
+				} else if (resObj.status == -5002) { // Cancel
+					document.getElementById('testTextArea').innerHTML = 'cancel: ' +resObj.stringResult;
+				} else {
+					document.getElementById('testTextArea').innerHTML = '???';
+				}
+			}
+		}, 
+		function onError(ret){});
+}
+
+						</code></pre>
+
+					</section>   
+					
+				</section> 
+				
+				<section>
+					<section id="frag_js_command">
+						<h2>命令</h2> 				 
+						<ul>
+							<li>支持创建命令（不常用）</li>						 
+								<font size = '6'>Acad.Editor.addCommand("MYGROUP", "CMD", "CMD", Acad.CommandFlag.MODAL, cmdFunction);</font>					 							 
+							<p>	
+							<li>能力拓展杀手锏：发送命令</li> 				 
+							<ul>
+								<li>去除纤程后的变革</li>						 
+								<li>执行现成的命令还是比较爽的</li>						 
+								<font size = '6'>Acad.Editor.executeCommand(…);</font>						 
+								<font size = '6'>Acad.Editor.executeCommandAsync(…);</font>			 						
+							</ul>					 
+						</ul>	
+					</section>	
+					<section id="frag_js_command">	
+						
+					</section>					
+				</section>
+				
+				 <section>
+					<section id="frag_js_rector">
+						<h2>反应器</h2> 				 
+						<ul>
+							<li>Acad.Application.activedocument.startObserving(oset,eventname,fn)</li>	
+							<li>Acad.Application.activedocument.stopObserving(oset,eventname,fn)</li>							
+								<ul>
+									<li>oset: 对象集合 （Acad.OSet）</li>						 									 															 
+									<li>eventname：事件名</li>						 									 															 
+									<li>fn:回调函数</li>						 									 															 
+								</ul>
+							<li>Acad.OSet</li>						 
+								<ul>
+									<li>对象的集合。元素类似于ads_name</li>						 									 															 
+								</ul> 
+						</ul>					 
+					</section>
+					<section id="frag_js_rector">
+						<h2>观察实体被修改</h2> 				 
+						<pre><code data-trim>
+var observedEntities = new Acad.OSet();
+function startReactor()
+{
+	var options = new Acad.PromptEntityOptions();
+    options.setMessageAndKeywords("\nSelect an Entity", "");
+    options.rejectMessage = "\nInvalid selection...";
+
+    options.singlePickInSpace = true;
+    options.allowObjectOnLockedLayer = true; 
+	
+	  Acad.Editor.getEntity(options).then(
+            function onComplete(jsonPromptResult){
+			      var resObj =  jsonPromptResult;
+				 if (resObj) {    
+
+					if (resObj.status == 5100) { // normal (point selected/entered) 
+						document.getElementById('testTextArea').innerHTML = 'object id : ' + resObj.objectId.toString() + '\n';
+					 
+						observedEntities.clear();
+						observedEntities.add(jsonPromptResult.objectId); 
+						
+						  Acad.Application.activedocument.startObserving(
+							observedEntities, 
+							Acad.Application.activedocument.eventname.modified, 
+							onObjectModified);
+					} 
+				}
+			}, 
+            function onError(ret){});
+}
+
+function onObjectModified(eventname, args) 
+{
+    var entity = new Acad.DBEntity(args.id);
+	document.getElementById('testTextArea').innerHTML ="Object Modified: "  + args.id;
+	
+	//convert ads_name to objectID
+	var oid =  args.id;
+	var hexString = oid.toString(16);
+	//objectID
+	oid = parseInt(hexString, 16);
+	var thisEnt = new Acad.DBEntity(hexString); 
+	//get
+	var props = thisEnt.getProperties();
+	
+	if(props.IsA == "AcDbCircle")
+	{
+		var outStr = "\ncenter: " + props.Center;
+		outStr += "\nradius: " + props.Radius;
+		outStr += "\nArea: " + props.Area;
+		outStr += "\nColor: " + props.Color;
+		document.getElementById('testTextArea').innerHTML += outStr;
+	}
+						
+}
+
+function stopReactor()
+{
+	Acad.Application.activedocument.stopObserving(
+                observedEntities1,
+                Acad.Application.activedocument.eventname.modified,
+                onObjectModified);
+}							
+						</code></pre>
+					</section>
+				</section>
+				
+				<section>
+					<section id="frag_js_execute">
+						<h2>拓展V8引擎</h2> 				 
+						<ul>
+							<li>exec()</li>						 
+								<ul>
+									<li>同步执行命令</li>						 									 															 
+								</ul>
+							<li>execAsync()</li>						 
+								<ul>
+									<li>异步执行命令</li>						 									 															 
+								</ul>
+							<li>JSON传输数据()</li>						 								 
+						</ul>
+					</section>	
+					<section id="frag_js_execute">	
+						<h2>配置.NET函数</h2> 		
+						<pre><code data-trim>
+[JavaScriptCallback("GetObjectCountData")]
+public string GetObjectData(string jsonArgs)
+{
+	var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+	if (doc == null)
+		return "{\"retCode\":1}";
+
+	// Initialize the JSON string to return the count information
+
+	var sb =
+	  new StringBuilder("{\"retCode\":0, \"retValue\":");
+	sb.Append("{\"sortOrder\":\"value-desc\",\"content\":[");
+
+	using (
+	  var tr = doc.TransactionManager.StartOpenCloseTransaction()
+	)
+	{
+		bool first = true;
+
+		var ms =
+		  (BlockTableRecord)tr.GetObject(
+			SymbolUtilityServices.GetBlockModelSpaceId(doc.Database),
+			OpenMode.ForRead
+		  );
+
+		// Use LINQ to count the objects in the modelspace,
+		// grouping the results by type (all done via ObjectIds,
+		// no need to open the objects themselves)
+
+		var q =
+		  from ObjectId o in ms
+		  group o by o.ObjectClass.DxfName into counts
+		  select new { Count = counts.Count(), Group = counts.Key };
+
+		// Serialize the results out to JSON
+
+		foreach (var i in q)
+		{
+			if (!first)
+				sb.Append(",");
+
+			first = false;
+			sb.AppendFormat(
+			  "{{\"label\":\"{0}\",\"value\":{1}}}", i.Group, i.Count
+			);
+		}
+		tr.Commit();
+	}
+	sb.Append("]}}");
+
+	return sb.ToString();
+}
+						</code></pre>
+					</section>	
+					<section id="frag_js_execute">	
+						<h2>JS调用.NET函数</h2> 
+						<pre><code data-trim>
+function execNETFunc()
+{
+	document.getElementById('testTextArea').innerHTML = "";
+	var jsonResponse =
+    exec(
+      JSON.stringify({
+        functionName: 'GetObjectCountData',
+        invokeAsCommand: false,
+        functionParams: undefined
+      })
+    );
+	  var jsonObj = JSON.parse(jsonResponse);
+	  if (jsonObj.retCode !== Acad.ErrorStatus.eJsOk) {
+		throw Error(jsonObj.retErrorString);
+	  }
+	  
+	var ret = jsonObj.retValue;
+	for(var o in ret.content)
+	{
+		document.getElementById('testTextArea').innerHTML += ret.content[o].label + " count:" + ret.content[o].value + "\n";
+	}
+	
+}
+						</code></pre>						
+					</section>  
+				</section>  
+				 
+				<section>
+					<h2>安全性</h2>
+					<p>
+						<ul>
+						<li>TRUSTEDDOMAINS 系统变量保障安全</li> 
+					</ul>
+					</p>
+				</section>
+				
+				
+				<section>
+					<h2>参考资料</h2>
+					<p>
+						<ul>
+						<li><a href = 'https://df-prod.autocad360.com/jsapi/v3/docs/idx.html'>API对象列表</a></li> 
+						<li><a href = 'https://df-prod.autocad360.com/jsapi/v3/GettingStart/index.html'>API帮助向导</a></li> 
+						<li><a href = 'https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js'>JS类库</a></li> 
+						<li><a href = 'http://adndevblog.typepad.com/autocad/2013/04/getting-started-with-javascript-api-on-autocad-2014.html'>入门课程视频（英文）</a></li> 
+						<li><a href = 'http://adndevblog.typepad.com/autocad/2013/04/getting-started-with-javascript-api-on-autocad-2014.html'>AU专题课程（英文）</a></li> 
+					</ul>
+					</p>
+				</section> 
 				 
 				
 				<section>
@@ -113,3 +784,5 @@
 
 	</body>
 </html>
+
+
