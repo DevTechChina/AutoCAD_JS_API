@@ -62,9 +62,14 @@
 					<p>
 						<ul>
 						<li>AutoCAD JavaScript API</li>
-						<li>Glue API简介</li>
-						<li>演示</li>
+						<li>加载, 调试JavaScript程序</li>
+						<li>可绑定对象集合</li>
+						<li>用户交互输入</li>
+						<li>命令</li>
+						<li>反应器</li>
+						<li>HTML与自定义命令数据通讯</li> 
 						<li>参考资料</li>
+						<li><a href="data/testdata.zip" target="_self">今天的演示例子</a></li>
 					</ul>
 					</p>
 				</section>
@@ -77,35 +82,35 @@
 						<li>'网络时代的语言组件'</li>
 						<li>很多高大上的语言都编译为JavaScript</li>
 						<li>HTML5的界面融入到AutoCAD</li>
-						<li>AutoCAD自己的'设计提要' 功能也是使用之</li>						 
+						<li>AutoCAD自己的某些功能也是使用，例如'设计提要'</li>						 
 					</ul>
 					</p>
 				</section>
 				
 				<section>
-				 
-					<h2>AutoCAD JavaScript API 当前目标</h2>					 
-					<ul>
-						<li>是什么</li>						 
-							<ul>
-								<li>广大的网络开发者加入AutoCAD俱乐部</li>						 
-								<li>2005年.NET 接口之后又一种新的API</li>
-								<li>AutoCAD自己的'设计提要' 功能也使用之</li>						 
-								<li>HTML5的界面融入到AutoCAD</li>															 
-								<li>程序的部署简单，一个URL即可</li>								 
-								<li>进程外的API</li>	
-								<li>主要是交互式功能</li>	
-									<ul>
-										<li>UI，Prompt，Jig，临时图形，发送命令</li>						 
-									</ul>								
-							</ul>
-						<li>不是什么</li>						 
+					 <section id="ovwerview">
+						<h2>AutoCAD JavaScript API</h2>					 
+						<ul>						 
+							<li>广大的网络开发者加入AutoCAD俱乐部</li>						 
+							<li>2005年.NET 接口之后又一种新的API</li>
+							<li>AutoCAD自己的'设计提要' 功能也使用之</li>						 
+							<li>HTML5的界面融入到AutoCAD</li>															 
+							<li>程序的部署简单，一个URL即可</li>								 
+							<li>进程外的API</li>	
+							<li>主要是交互式功能</li>	
+								<ul>
+									<li>UI，Prompt，Jig，临时图形，发送命令</li>						 
+								</ul>  
+						</ul>	
+					</section>	
+					<section id="ovwerview">
+						<h2>不是:</h2>						 
 							<ul>
 								<li>直接操作图纸数据库</li>						 
 								<li>直接访问和操作图形元素</li>						 
 								<li>进程内，性能优先的API</li>						 
-							</ul>					
-					</ul>					 
+							</ul>						
+					</section>
 				</section>
 				
 				<section>
@@ -116,10 +121,17 @@
 								<li>宿主程序：AcWebBrowser.exe。集成Chrome式的嵌入框架。使用到V8引擎,可扩展</li>						 									 															 
 							</ul>
 						<li><a href='https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js'>中间层:<br>https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js</a></li>						 						
-						<li>与AutoCAD进程间数据通讯：Json形式</li>	 						
-						<li>目前API总入口：<b>Acad</b>对象</li>	 
 						<li>2013:v1; 2014:v2; 2016:v3
+						<li>与AutoCAD进程间数据通讯：Json形式</li>	 												
+						<li>API总入口：<b>Acad</b>对象</li>	 
+
 					</ul>					 
+				</section>
+				
+				<section>
+					<h2><a href = 'https://df-prod.autocad360.com/jsapi/v3/docs/idx.html'> API 对象结构</a></h2> 	
+ 					<img width="800" height="400" data-src="images/objtree.png" alt="Down arrow">		
+					
 				</section>
 				
 				<section>
@@ -221,76 +233,56 @@ ps.Add("…", uri);
 
 					<pre><code data-trim >
 [CommandMethod("AdnJsDemo")]
-public void AdnJsDemo()
-{
-	string dir = System.Environment.GetFolderPath(
-		System.Environment.SpecialFolder.Desktop);
+ public void AdnJsDemo()
+ {
+	 //获取桌面路径
+	 string dir = System.Environment.GetFolderPath(
+		 System.Environment.SpecialFolder.Desktop);
 
-	System.Windows.Forms.OpenFileDialog oFlg = new   System.Windows.Forms.OpenFileDialog();
-	oFlg.Title = "Select Html File to load...";
-	oFlg.Filter = "Html Files (*.html)|*.html";
-	if (oFlg.ShowDialog() != DialogResult.OK)
-	{
-		return;
-	}
+	 //选择HTML文件
+	 System.Windows.Forms.OpenFileDialog oFlg = new System.Windows.Forms.OpenFileDialog();
+	 oFlg.Title = "Select Html File to load...";
+	 oFlg.Filter = "Html Files (*.html)|*.html";
+	 if (oFlg.ShowDialog() != DialogResult.OK)
+	 {
+		 return;
+	 }
+	 string filename = oFlg.FileName;
+	 if (filename == string.Empty)
+		 return;
 
+	 //创建停靠窗口	
+	 if (_ps == null)
+	 {
+		 _ps = new Autodesk.AutoCAD.Windows.PaletteSet(
+			 "JavaScript Demo",
+			 new Guid("730CF323-7D71-40A1-990E-F7CF81A84340"));
+	 }
 
-	string filename = oFlg.FileName;
-	if (filename == string.Empty)
-		return;
+	 String url = "file:///" + filename;
+	 try
+	 {
+		 //停靠窗口显示名
+		 String tabName = "我的JS停靠窗口";
+		 Uri uri = new Uri(url); 
 
-	if (_ps == null)
-	{
-		_ps = new Autodesk.AutoCAD.Windows.PaletteSet(
-			"JavaScript Demo",
-			new Guid("730CF323-7D71-40A1-990E-F7CF81A84340"));
-	}
+		 if (_ps.Count != 0)
+		 {
+			 _ps[0].PaletteSet.Remove(0);
+		 }
 
-	String url = "file:///" + filename;
-	//String url = demo_site_url;
+		 // 使用HTML文件或URL作为停靠窗口的参数  
+		 Palette p = _ps.Add(tabName, uri);
 
-	try
-	{
-		String tabName = "";
-		Uri uri = new Uri(url);
-
-		if (uri.IsFile)
-		{
-			String[] segments = uri.Segments;
-
-			if (segments.Length > 0)
-			{
-				tabName = segments[segments.Length - 1];
-
-				String[] fileSplit = tabName.Split('.');
-
-				if (fileSplit.Length > 0)
-					tabName = fileSplit[0];
-			}
-		}
-		else
-		{
-			tabName = uri.Host;
-		}
-
-		if(_ps.Count !=0) 
-		{
-			_ps[0].PaletteSet.Remove(0);
-		}
-
-		// The PaletteSet.Add method takes as input an Uri
-		// that can point either to a local html page or any online url
-		Palette p = _ps.Add(tabName, uri);
-
-		_ps.Visible = true;
-	}
-	catch (UriFormatException ex)  
-	{
-		// This exception will catch an empty our null Uri
-		System.Windows.Forms.MessageBox.Show(ex.Message);
-	}
-}
-							  
+		 _ps.Visible = true;
+	 }
+	 catch (UriFormatException ex)
+	 {
+		 // 抛出可能异常 
+		 System.Windows.Forms.MessageBox.Show(ex.Message);
+	 }
+ }
+					  
 					</code></pre>	
 				</section>		
 				</section>	 
@@ -522,10 +514,13 @@ function getEntity()
 								<font size = '6'>Acad.Editor.executeCommandAsync(…);</font>			 						
 							</ul>					 
 						</ul>	
+									<pre><code data-trim>
+Acad.Editor.executeCommand('._Circle 0,0,0 10');					
+					</code></pre>	
 					</section>	
-					<section id="frag_js_command">	
-						
-					</section>					
+					 
+							
+					 		
 				</section>
 				
 				 <section>
