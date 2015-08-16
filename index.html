@@ -42,21 +42,13 @@
 			<div class="slides">
 				<section>
 					<h1>AutoCAD JavaScript API</h1>	
-					<h3>梁晓冬</h3>	
+					<h5>梁晓冬</h5>	
 					<font size='5'><p>开发顾问，DevTech中国区经理<p>
-					<h5>开发技术支持部（DevTech）<p></p>Autodesk开发商网络（ADN）</h5>	
+					 开发技术支持部（DevTech）<p></p>Autodesk开发商网络（ADN） </font>
 					
 				</section>
 				
-				<section>
-					<h3>讲师</h3> 
-					<h5>梁晓冬&nbsp&nbsp  					 
-						<img width="100" height="100" data-src="images/xd.png" alt="Down arrow">	 					 
-					<font size='5'><p>DevTech中国区经理<p> 
-					负责产品：AutoCAD, Inventor, Navisworks, BIM 360，Fusion 360及其它云和移动产品
-				</font>							
-					
-				</section>
+				 
 
 				<section>
 					<h2>内容</h2>
@@ -70,7 +62,7 @@
 						<li>反应器</li>
 						<li>HTML与自定义命令数据通讯</li> 
 						<li>参考资料</li>
-						<li><a href="data/TestData.zip" target="_self">今天的演示例子</a></li>
+						<li><a href="data/Demo.zip" target="_self">今天的演示例子</a></li>
 					</ul>
 					</p>
 				</section>
@@ -178,13 +170,11 @@
 				<section>
 					<h2>直接方式</h2> 				 
 					 <pre><code data-trim contenteditable>
-// 函数定义 
+ // 函数定义 
 function pickPoint() {
     function onComplete(args) {
-		//成功完成
-        var resObj = JSON.parse(args);
-        if (resObj) 
-            alert('You picked: ' + resObj.value.x + "," + resObj.value.y + "," + resObj.value.z);
+		//成功完成 
+         alert('You picked: ' + args.value.x + "," + args.value.y + "," + args.value.z);
     }
     function onError(args) {
 		//任何失败 
@@ -194,7 +184,7 @@ function pickPoint() {
     Acad.Editor.getPoint(optionsFirst).then(onComplete, onError);
 }
 //执行函数 
-pickPoint(); 
+pickPoint();
 
 					</code></pre>		
 				</section>
@@ -338,11 +328,7 @@ function setSysvar()
 	sysvar.postValue(sysnewvalue);
 }
 
-function myCircle()
-{
-	Acad.Editor.executeCommand('._Circle ');
-}
-
+ 
 					</code></pre>
 </section>					
 					 					 
@@ -374,7 +360,7 @@ function myCircle()
 	var results;
 	Acad.DataItemCollectionManager.getKnownCollection(colName).then(function onSuccess(retvalue){
 			 for (var index = 0; index < retvalue.dataItems.length; ++index) {
-				alert(retvalue.dataItems[index].name);
+				console.log(retvalue.dataItems[index].name);
 			}
 	}
 	,function onError(ret){});	 
@@ -628,58 +614,57 @@ function stopReactor()
 					<section id="frag_js_execute">	
 						<h2>配置.NET函数</h2> 		
 						<pre><code data-trim>
-[JavaScriptCallback("GetObjectCountData")]
-public string GetObjectData(string jsonArgs)
-{
-	var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
-	if (doc == null)
-		return "{\"retCode\":1}";
+ //Javascript回调函数
+ [JavaScriptCallback("GetObjectCountData")]
+ public string GetObjectData(string jsonArgs)
+ {
+	 var doc = Autodesk.AutoCAD.ApplicationServices.Application.DocumentManager.MdiActiveDocument;
+	 if (doc == null)
+		 return "{\"retCode\":1}";
 
-	// Initialize the JSON string to return the count information
+	 //统计对象类型数量，构造Json串
 
-	var sb =
-	  new StringBuilder("{\"retCode\":0, \"retValue\":");
-	sb.Append("{\"sortOrder\":\"value-desc\",\"content\":[");
+	 var sb =
+	   new StringBuilder("{\"retCode\":0, \"retValue\":");
+	 sb.Append("{\"sortOrder\":\"value-desc\",\"content\":[");
 
-	using (
-	  var tr = doc.TransactionManager.StartOpenCloseTransaction()
-	)
-	{
-		bool first = true;
+	 using (
+	   var tr = doc.TransactionManager.StartOpenCloseTransaction()
+	 )
+	 {
+		 bool first = true;
 
-		var ms =
-		  (BlockTableRecord)tr.GetObject(
-			SymbolUtilityServices.GetBlockModelSpaceId(doc.Database),
-			OpenMode.ForRead
-		  );
+		 var ms =
+		   (BlockTableRecord)tr.GetObject(
+			 SymbolUtilityServices.GetBlockModelSpaceId(doc.Database),
+			 OpenMode.ForRead
+		   );
 
-		// Use LINQ to count the objects in the modelspace,
-		// grouping the results by type (all done via ObjectIds,
-		// no need to open the objects themselves)
+		 // LINQ语法统计模型空间对象类型和数量。不需要直接打开对象
 
-		var q =
-		  from ObjectId o in ms
-		  group o by o.ObjectClass.DxfName into counts
-		  select new { Count = counts.Count(), Group = counts.Key };
+		 var q =
+		   from ObjectId o in ms
+		   group o by o.ObjectClass.DxfName into counts
+		   select new { Count = counts.Count(), Group = counts.Key };
 
-		// Serialize the results out to JSON
+		 // Json序列化
 
-		foreach (var i in q)
-		{
-			if (!first)
-				sb.Append(",");
+		 foreach (var i in q)
+		 {
+			 if (!first)
+				 sb.Append(",");
 
-			first = false;
-			sb.AppendFormat(
-			  "{{\"label\":\"{0}\",\"value\":{1}}}", i.Group, i.Count
-			);
-		}
-		tr.Commit();
-	}
-	sb.Append("]}}");
+			 first = false;
+			 sb.AppendFormat(
+			   "{{\"label\":\"{0}\",\"value\":{1}}}", i.Group, i.Count
+			 );
+		 }
+		 tr.Commit();
+	 }
+	 sb.Append("]}}");
 
-	return sb.ToString();
-}
+	 return sb.ToString();
+ }
 						</code></pre>
 					</section>	
 					<section id="frag_js_execute">	
@@ -726,6 +711,7 @@ function execNETFunc()
 					<h2>参考资料</h2>
 					<p>
 						<ul>
+						<li><a href="data/MoreDemos.zip" target="_self">更多演示例子</a></li>
 						<li><a href = 'https://df-prod.autocad360.com/jsapi/v3/docs/idx.html'>API对象列表</a></li> 
 						<li><a href = 'https://df-prod.autocad360.com/jsapi/v3/GettingStart/index.html'>API帮助向导</a></li> 
 						<li><a href = 'https://df-prod.autocad360.com/jsapi/v3/Autodesk.AutoCAD.js'>JS类库</a></li> 
