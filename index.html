@@ -230,7 +230,8 @@ ps.Add("…", uri);
 		 System.Environment.SpecialFolder.Desktop);
 
 	 //选择HTML文件
-	 System.Windows.Forms.OpenFileDialog oFlg = new System.Windows.Forms.OpenFileDialog();
+	 System.Windows.Forms.OpenFileDialog oFlg = 
+		new System.Windows.Forms.OpenFileDialog();
 	 oFlg.Title = "Select Html File to load...";
 	 oFlg.Filter = "Html Files (*.html)|*.html";
 	 if (oFlg.ShowDialog() != DialogResult.OK)
